@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 
 namespace OBP200_RolePlayingGame;
-/* 111 */
 
 class Program
 {
