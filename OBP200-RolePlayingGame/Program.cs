@@ -347,66 +347,6 @@ class Program
         return Rng.NextDouble() < chance;
     }
 
-    static bool IsPlayerDead()
-    {
-        return ParseInt(Player[2], 0) <= 0;
-    }
-
-    static void AddPlayerXp(int amount)
-    {
-        int xp = ParseInt(Player[7], 0) + Math.Max(0, amount);
-        Player[7] = xp.ToString();
-        MaybeLevelUp();
-    }
-
-    static void AddPlayerGold(int amount)
-    {
-        int gold = ParseInt(Player[6], 0) + Math.Max(0, amount);
-        Player[6] = gold.ToString();
-    }
-
-    static void MaybeLevelUp()
-    {
-        // Nivåtrösklar
-        int xp = ParseInt(Player[7], 0);
-        int lvl = ParseInt(Player[8], 1);
-        int nextThreshold = lvl == 1 ? 10 : (lvl == 2 ? 25 : (lvl == 3 ? 45 : lvl * 20));
-
-        if (xp >= nextThreshold)
-        {
-            Player[8] = (lvl + 1).ToString();
-
-            // Uppgradering baserad på karaktärsklass
-            string cls = Player[1] ?? "Warrior";
-            int maxhp = ParseInt(Player[3], 1);
-            int atk = ParseInt(Player[4], 1);
-            int def = ParseInt(Player[5], 0);
-
-            switch (cls)
-            {
-                case "Warrior":
-                    maxhp += 6; atk += 2; def += 2;
-                    break;
-                case "Mage":
-                    maxhp += 4; atk += 4; def += 1;
-                    break;
-                case "Rogue":
-                    maxhp += 5; atk += 3; def += 1;
-                    break;
-                default:
-                    maxhp += 4; atk += 3; def += 1;
-                    break;
-            }
-
-            Player[3] = maxhp.ToString();
-            Player[4] = atk.ToString();
-            Player[5] = def.ToString();
-            Player[2] = maxhp.ToString(); // full heal vid level up
-
-            Console.WriteLine($"Du når nivå {lvl + 1}! Värden ökade och HP återställd.");
-        }
-    }
-
     static void MaybeDropLoot(string enemyName)
     {
         // Enkel loot-regel
