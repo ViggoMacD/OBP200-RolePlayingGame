@@ -317,13 +317,6 @@ class Program
         return dmg;
     }
 
-    static void ApplyDamageToPlayer(int dmg)
-    {
-        int hp = ParseInt(Player[2], 0);
-        hp -= Math.Max(0, dmg);
-        Player[2] = Math.Max(0, hp).ToString();
-    }
-
     static void UsePotion()
     {
         int pot = ParseInt(Player[9], 0);
