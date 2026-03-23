@@ -25,7 +25,7 @@ class Warrior : Player
     {
         Console.WriteLine("Warrior använder Heavy Strike!");
         int dmg = Math.Max(2, ATK + 3 - enemyDef);
-        HP -= 2;
+        TakeDamage(2);
         return dmg;
     }
 }

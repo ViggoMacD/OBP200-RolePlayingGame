@@ -15,7 +15,6 @@ class Program
 
     // Spelarens "databas": alla värden som strängar
     // index: 0 Name, 1 Class, 2 HP, 3 MaxHP, 4 ATK, 5 DEF, 6 GOLD, 7 XP, 8 LEVEL, 9 POTIONS, 10 INVENTORY (semicolon-sep)
-    static string[] Player = new string[11];
 
     // Rum: [type, label]
     // types: battle, treasure, shop, rest, boss
@@ -97,18 +96,6 @@ class Program
                 break;
         }
 
-        Player[0] = player.Name;
-        Player[1] = player.ClassName;
-        Player[2] = player.HP.ToString();
-        Player[3] = player.MaxHP.ToString();
-        Player[4] = player.ATK.ToString();
-        Player[5] = player.DEF.ToString();
-        Player[6] = player.Gold.ToString();
-        Player[7] = player.XP.ToString();
-        Player[8] = player.Level.ToString();
-        Player[9] = player.Potions.ToString();
-        Player[10] = player.Inventory;
-
         // Initiera karta (linjärt äventyr)
         Rooms.Clear();
         Rooms.Add(new[] { "battle", "Skogsstig" });
@@ -134,7 +121,7 @@ class Program
 
             bool continueAdventure = EnterRoom(room[0]);
             
-            if (IsPlayerDead())
+            if (player.IsDead())
             {
                 Console.WriteLine("Du har stupat... Spelet över.");
                 break;
@@ -203,7 +190,7 @@ class Program
         int enemyAtk = ParseInt(enemy[3], 3);
         int enemyDef = ParseInt(enemy[4], 0);
 
-        while (enemyHp > 0 && !IsPlayerDead())
+        while (enemyHp > 0 && !player.IsDead())
         {
             Console.WriteLine();
             ShowStatus();
@@ -228,7 +215,7 @@ class Program
             }
             else if (cmd == "P")
             {
-                UsePotion();
+                player.UsePotion();
             }
             else if (cmd == "R" && !isBoss)
             {
@@ -251,11 +238,11 @@ class Program
 
             // Fiendens tur
             int enemyDamage = CalculateEnemyDamage(enemyAtk);
-            ApplyDamageToPlayer(enemyDamage);
+            player.TakeDamage(enemyDamage);
             Console.WriteLine($"{enemy[1]} anfaller och gör {enemyDamage} skada!");
         }
 
-        if (IsPlayerDead())
+        if (player.IsDead())
         {
             return false; // avsluta äventyr
         }
@@ -264,8 +251,8 @@ class Program
         int xpReward = ParseInt(enemy[5], 5);
         int goldReward = ParseInt(enemy[6], 3);
 
-        AddPlayerXp(xpReward);
-        AddPlayerGold(goldReward);
+        player.AddXP(xpReward);
+        player.AddGold(goldReward);
 
         Console.WriteLine($"Seger! +{xpReward} XP, +{goldReward} guld.");
         MaybeDropLoot(enemy[1]);
@@ -306,7 +293,7 @@ class Program
 
     static int CalculateEnemyDamage(int enemyAtk)
     {
-        int def = ParseInt(Player[5], 0);
+        int def = player.DEF;
         int roll = Rng.Next(0, 3);
 
         int dmg = Math.Max(1, enemyAtk - (def / 2)) + roll;
@@ -316,31 +303,12 @@ class Program
 
         return dmg;
     }
-
-    static void UsePotion()
-    {
-        int pot = ParseInt(Player[9], 0);
-        if (pot <= 0)
-        {
-            Console.WriteLine("Du har inga drycker kvar.");
-            return;
-        }
-        int hp = ParseInt(Player[2], 0);
-        int maxhp = ParseInt(Player[3], 1);
-
-        // Helning av spelaren
-        int heal = 12;
-        int newHp = Math.Min(maxhp, hp + heal);
-        Player[2] = newHp.ToString();
-        Player[9] = (pot - 1).ToString();
-
-        Console.WriteLine($"Du dricker en dryck och återfår {newHp - hp} HP.");
-    }
+    
 
     static bool TryRunAway()
     {
         // Flyktschans baserad på karaktärsklass
-        string cls = Player[1] ?? "Warrior";
+        string cls = player.ClassName ?? "Warrior";
         double chance = 0.25;
         if (cls == "Rogue") chance = 0.5;
         if (cls == "Mage") chance = 0.35;
@@ -355,9 +323,9 @@ class Program
             string item = "Minor Gem";
             if (enemyName.Contains("Urdraken")) item = "Dragon Scale";
 
-            var inv = (Player[10] ?? "").Trim();
-            if (string.IsNullOrEmpty(inv)) Player[10] = item;
-            else Player[10] = inv + ";" + item;
+            var inv = (player.Inventory ?? "").Trim();
+            if (string.IsNullOrEmpty(inv)) player.Inventory = item;
+            else player.Inventory = inv + ";" + item;
 
             Console.WriteLine($"Föremål hittat: {item} (lagt i din väska)");
         }
@@ -371,15 +339,15 @@ class Program
         if (Rng.NextDouble() < 0.5)
         {
             int gold = Rng.Next(8, 15);
-            AddPlayerGold(gold);
+            player.AddGold(gold);
             Console.WriteLine($"Kistan innehåller {gold} guld!");
         }
         else
         {
             var items = new[] { "Iron Dagger", "Oak Staff", "Leather Vest", "Healing Herb" };
             string found = items[Rng.Next(items.Length)];
-            var inv = (Player[10] ?? "").Trim();
-            Player[10] = string.IsNullOrEmpty(inv) ? found : (inv + ";" + found);
+            var inv = (player.Inventory ?? "").Trim();
+            player.Inventory = string.IsNullOrEmpty(inv) ? found : (inv + ";" + found);
             Console.WriteLine($"Du plockar upp: {found}");
         }
         return true;
@@ -390,7 +358,7 @@ class Program
         Console.WriteLine("En vandrande köpman erbjuder sina varor:");
         while (true)
         {
-            Console.WriteLine($"Guld: {Player[6]} | Drycker: {Player[9]}");
+            Console.WriteLine($"Guld: {player.Gold} | Drycker: {player.Potions}");
             Console.WriteLine("1) Köp dryck (10 guld)");
             Console.WriteLine("2) Köp vapen (+2 ATK) (25 guld)");
             Console.WriteLine("3) Köp rustning (+2 DEF) (25 guld)");
@@ -401,15 +369,15 @@ class Program
 
             if (val == "1")
             {
-                TryBuy(10, () => Player[9] = (ParseInt(Player[9], 0) + 1).ToString(), "Du köper en dryck.");
+                TryBuy(10, () => player.Potions++, "Du köper en dryck.");
             }
             else if (val == "2")
             {
-                TryBuy(25, () => Player[4] = (ParseInt(Player[4], 0) + 2).ToString(), "Du köper ett bättre vapen.");
+                TryBuy(25, () => player.ATK += 2, "Du köper ett bättre vapen.");
             }
             else if (val == "3")
             {
-                TryBuy(25, () => Player[5] = (ParseInt(Player[5], 0) + 2).ToString(), "Du köper bättre rustning.");
+                TryBuy(25, () => player.DEF += 2, "Du köper bättre rustning.");
             }
             else if (val == "4")
             {
@@ -430,10 +398,9 @@ class Program
 
     static void TryBuy(int cost, Action apply, string successMsg)
     {
-        int gold = ParseInt(Player[6], 0);
-        if (gold >= cost)
+        if (player.Gold >= cost)
         {
-            Player[6] = (gold - cost).ToString();
+            player.Gold -= cost;
             apply();
             Console.WriteLine(successMsg);
         }
@@ -445,7 +412,7 @@ class Program
 
     static void SellMinorGems()
     {
-        var inv = (Player[10] ?? "");
+        var inv = player.Inventory ?? "";
         if (string.IsNullOrWhiteSpace(inv))
         {
             Console.WriteLine("Du har inga föremål att sälja.");
@@ -461,17 +428,16 @@ class Program
         }
 
         items = items.Where(x => x != "Minor Gem").ToList();
-        Player[10] = items.Count == 0 ? "" : string.Join(";", items);
+        player.Inventory = items.Count == 0 ? "" : string.Join(";", items);
 
-        AddPlayerGold(count * 5);
+        player.AddGold(count * 5);
         Console.WriteLine($"Du säljer {count} st Minor Gem för {count * 5} guld.");
     }
 
     static bool DoRest()
     {
         Console.WriteLine("Du slår läger och vilar.");
-        int maxhp = ParseInt(Player[3], 1);
-        Player[2] = maxhp.ToString();
+        player.HP = player.MaxHP;
         Console.WriteLine("HP återställt till max.");
         return true;
     }
