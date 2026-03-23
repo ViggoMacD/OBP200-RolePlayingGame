@@ -1,7 +1,10 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace OBP200_RolePlayingGame;
-
+/* 111 */
 
 class Program
 {
@@ -75,33 +78,33 @@ class Program
         Console.Write("Val: ");
         var k = (Console.ReadLine() ?? "").Trim();
 
-        string playerClass = "Warrior";
+        string cls = "Warrior";
         int hp = 0, maxhp = 0, atk = 0, def = 0;
         int potions = 0, gold = 0;
         
         switch (k)
         {
             case "1": // Warrior: tankig
-                playerClass = "Warrior";
+                cls = "Warrior";
                 maxhp = 40; hp = 40; atk = 7; def = 5; potions = 2; gold = 15;
                 break;
             case "2": // Mage: hög damage, låg def
-                playerClass = "Mage";
+                cls = "Mage";
                 maxhp = 28; hp = 28; atk = 10; def = 2; potions = 2; gold = 15;
                 break;
             case "3": // Rogue: krit-chans
-                playerClass = "Rogue";
+                cls = "Rogue";
                 maxhp = 32; hp = 32; atk = 8; def = 3; potions = 3; gold = 20;
                 break;
             default:
-                playerClass = "Warrior";
+                cls = "Warrior";
                 maxhp = 40; hp = 40; atk = 7; def = 5; potions = 2; gold = 15;
                 break;
         }
 
         // Fyll player-array
         Player[0] = name;
-        Player[1] = playerClass;
+        Player[1] = cls;
         Player[2] = hp.ToString();
         Player[3] = maxhp.ToString();
         Player[4] = atk.ToString();
@@ -124,7 +127,7 @@ class Program
 
         CurrentRoomIndex = 0;
 
-        Console.WriteLine($"Välkommen, {name} the {playerClass}!");
+        Console.WriteLine($"Välkommen, {name} the {cls}!");
         ShowStatus();
     }
 
@@ -310,13 +313,13 @@ class Program
     static int CalculatePlayerDamage(int enemyDef)
     {
         int atk = ParseInt(Player[4], 5);
-        string playerClass = Player[1] ?? "Warrior";
+        string cls = Player[1] ?? "Warrior";
 
         // Beräkna grundskada
         int baseDmg = Math.Max(1, atk - (enemyDef / 2));
         int roll = Rng.Next(0, 3); // liten variation
 
-        switch (playerClass.Trim())
+        switch (cls.Trim())
         {
             case "Warrior":
                 baseDmg += 1; // warrior buff
@@ -337,11 +340,11 @@ class Program
 
     static int UseClassSpecial(int enemyDef, bool vsBoss)
     {
-        string playerClass = Player[1] ?? "Warrior";
+        string cls = Player[1] ?? "Warrior";
         int specialDmg = 0;
 
         // Hantering av specialförmågor
-        if (playerClass == "Warrior")
+        if (cls == "Warrior")
         {
             // Heavy Strike: hög skada men självskada
             Console.WriteLine("Warrior använder Heavy Strike!");
@@ -349,7 +352,7 @@ class Program
             specialDmg = Math.Max(2, atk + 3 - enemyDef);
             ApplyDamageToPlayer(2); // självskada
         }
-        else if (playerClass == "Mage")
+        else if (cls == "Mage")
         {
             // Fireball: stor skada, kostar guld
             int gold = ParseInt(Player[6], 0);
@@ -366,7 +369,7 @@ class Program
                 specialDmg = 0;
             }
         }
-        else if (playerClass == "Rogue")
+        else if (cls == "Rogue")
         {
             // Backstab: chans att ignorera försvar, hög risk/hög belöning
             if (Rng.NextDouble() < 0.5)
@@ -438,10 +441,10 @@ class Program
     static bool TryRunAway()
     {
         // Flyktschans baserad på karaktärsklass
-        string playerClass = Player[1] ?? "Warrior";
+        string cls = Player[1] ?? "Warrior";
         double chance = 0.25;
-        if (playerClass == "Rogue") chance = 0.5;
-        if (playerClass == "Mage") chance = 0.35;
+        if (cls == "Rogue") chance = 0.5;
+        if (cls == "Mage") chance = 0.35;
         return Rng.NextDouble() < chance;
     }
 
@@ -475,12 +478,12 @@ class Program
             Player[8] = (lvl + 1).ToString();
 
             // Uppgradering baserad på karaktärsklass
-            string playerClass = Player[1] ?? "Warrior";
+            string cls = Player[1] ?? "Warrior";
             int maxhp = ParseInt(Player[3], 1);
             int atk = ParseInt(Player[4], 1);
             int def = ParseInt(Player[5], 0);
 
-            switch (playerClass)
+            switch (cls)
             {
                 case "Warrior":
                     maxhp += 6; atk += 2; def += 2;
