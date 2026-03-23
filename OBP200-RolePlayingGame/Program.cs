@@ -216,13 +216,13 @@ class Program
 
             if (cmd == "A")
             {
-                int damage = CalculatePlayerDamage(enemyDef);
+                int damage = player.CalculateDamage(enemyDef) + Rng.Next(0, 3);
                 enemyHp -= damage;
                 Console.WriteLine($"Du slog {enemy[1]} för {damage} skada.");
             }
             else if (cmd == "X")
             {
-                int special = UseClassSpecial(enemyDef, isBoss);
+                int special = player.UseSpecial(enemyDef, isBoss);
                 enemyHp -= special;
                 Console.WriteLine($"Special! {enemy[1]} tar {special} skada.");
             }
@@ -302,94 +302,6 @@ class Program
         EnemyTemplates.Add(new[] { "undead", "Skelett", "20", "5", "2", "7", "5" });
         EnemyTemplates.Add(new[] { "bandit", "Bandit", "16", "6", "1", "8", "6" });
         EnemyTemplates.Add(new[] { "slime", "Geléslem", "14", "3", "0", "5", "3" });
-    }
-
-    static int CalculatePlayerDamage(int enemyDef)
-    {
-        int atk = ParseInt(Player[4], 5);
-        string cls = Player[1] ?? "Warrior";
-
-        // Beräkna grundskada
-        int baseDmg = Math.Max(1, atk - (enemyDef / 2));
-        int roll = Rng.Next(0, 3); // liten variation
-
-        switch (cls.Trim())
-        {
-            case "Warrior":
-                baseDmg += 1; // warrior buff
-                break;
-            case "Mage":
-                baseDmg += 2; // mage buff
-                break;
-            case "Rogue":
-                baseDmg += (Rng.NextDouble() < 0.2) ? 4 : 0; // rogue crit-chans
-                break;
-            default:
-                baseDmg += 0;
-                break;
-        }
-
-        return Math.Max(1, baseDmg + roll);
-    }
-
-    static int UseClassSpecial(int enemyDef, bool vsBoss)
-    {
-        string cls = Player[1] ?? "Warrior";
-        int specialDmg = 0;
-
-        // Hantering av specialförmågor
-        if (cls == "Warrior")
-        {
-            // Heavy Strike: hög skada men självskada
-            Console.WriteLine("Warrior använder Heavy Strike!");
-            int atk = ParseInt(Player[4], 5);
-            specialDmg = Math.Max(2, atk + 3 - enemyDef);
-            ApplyDamageToPlayer(2); // självskada
-        }
-        else if (cls == "Mage")
-        {
-            // Fireball: stor skada, kostar guld
-            int gold = ParseInt(Player[6], 0);
-            if (gold >= 3)
-            {
-                Console.WriteLine("Mage kastar Fireball!");
-                Player[6] = (gold - 3).ToString();
-                int atk = ParseInt(Player[4], 5);
-                specialDmg = Math.Max(3, atk + 5 - (enemyDef / 2));
-            }
-            else
-            {
-                Console.WriteLine("Inte tillräckligt med guld för att kasta Fireball (kostar 3).");
-                specialDmg = 0;
-            }
-        }
-        else if (cls == "Rogue")
-        {
-            // Backstab: chans att ignorera försvar, hög risk/hög belöning
-            if (Rng.NextDouble() < 0.5)
-            {
-                Console.WriteLine("Rogue utför en lyckad Backstab!");
-                int atk = ParseInt(Player[4], 5);
-                specialDmg = Math.Max(4, atk + 6);
-            }
-            else
-            {
-                Console.WriteLine("Backstab misslyckades!");
-                specialDmg = 1;
-            }
-        }
-        else
-        {
-            specialDmg = 0;
-        }
-
-        // Dämpa skada mot bossen
-        if (vsBoss)
-        {
-            specialDmg = (int)Math.Round(specialDmg * 0.8);
-        }
-
-        return Math.Max(0, specialDmg);
     }
 
     static int CalculateEnemyDamage(int enemyAtk)
@@ -635,11 +547,11 @@ class Program
 
     static void ShowStatus()
     {
-        Console.WriteLine($"[{Player[0]} | {Player[1]}]  HP {Player[2]}/{Player[3]}  ATK {Player[4]}  DEF {Player[5]}  LVL {Player[8]}  XP {Player[7]}  Guld {Player[6]}  Drycker {Player[9]}");
-        var inv = (Player[10] ?? "");
-        if (!string.IsNullOrWhiteSpace(inv))
+        Console.WriteLine($"[{player.Name} | {player.ClassName}]  HP {player.HP}/{player.MaxHP}  ATK {player.ATK}  DEF {player.DEF}  LVL {player.Level}  XP {player.XP}  Guld {player.Gold}  Drycker {player.Potions}");
+
+        if (!string.IsNullOrWhiteSpace(player.Inventory))
         {
-            Console.WriteLine($"Väska: {inv}");
+            Console.WriteLine($"Väska: {player.Inventory}");
         }
     }
     
