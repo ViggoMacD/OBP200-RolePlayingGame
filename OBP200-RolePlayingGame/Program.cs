@@ -304,15 +304,10 @@ class Program
         return dmg;
     }
     
-
+    //Lite polymorfism sådär
     static bool TryRunAway()
     {
-        // Flyktschans baserad på karaktärsklass
-        string cls = player.ClassName ?? "Warrior";
-        double chance = 0.25;
-        if (cls == "Rogue") chance = 0.5;
-        if (cls == "Mage") chance = 0.35;
-        return Rng.NextDouble() < chance;
+        return Rng.NextDouble() < player.GetEscapeChance();
     }
 
     static void MaybeDropLoot(string enemyName)

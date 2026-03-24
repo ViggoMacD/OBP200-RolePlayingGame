@@ -33,4 +33,8 @@ class Mage : Player
         Console.WriteLine("Inte tillräckligt med guld.");
         return 0;
     }
+    public override double GetEscapeChance()
+    {
+        return 0.35;
+    }
 }

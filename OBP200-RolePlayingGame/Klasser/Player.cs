@@ -98,6 +98,10 @@ abstract class Player
         }
     }
     
+    public virtual double GetEscapeChance()
+    {
+        return 0.25;
+    }
     
 // lite trixig polymorfism
     public abstract int CalculateDamage(int enemyDef);

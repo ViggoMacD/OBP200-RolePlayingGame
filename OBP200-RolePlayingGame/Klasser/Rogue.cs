@@ -37,4 +37,8 @@ class Rogue : Player
         Console.WriteLine("Backstab misslyckades!");
         return 1;
     }
+    public override double GetEscapeChance()
+    {
+        return 0.5;
+    }
 }
