@@ -18,7 +18,7 @@ class Program
 
     // Rum: [type, label]
     // types: battle, treasure, shop, rest, boss
-    static List<string[]> Rooms = new List<string[]>();
+    static List<Room> Rooms = new List<Room>();
 
     // Fiendemallar: [type, name, HP, ATK, DEF, XPReward, GoldReward]
     static List<string[]> EnemyTemplates = new List<string[]>();
@@ -98,13 +98,13 @@ class Program
 
         // Initiera karta (linjärt äventyr)
         Rooms.Clear();
-        Rooms.Add(new[] { "battle", "Skogsstig" });
-        Rooms.Add(new[] { "treasure", "Gammal kista" });
-        Rooms.Add(new[] { "shop", "Vandrande köpman" });
-        Rooms.Add(new[] { "battle", "Grottans mynning" });
-        Rooms.Add(new[] { "rest", "Lägereld" });
-        Rooms.Add(new[] { "battle", "Grottans djup" });
-        Rooms.Add(new[] { "boss", "Urdraken" });
+        Rooms.Add(new Room("battle", "Skogsstig"));
+        Rooms.Add(new Room("treasure", "Gammal kista"));
+        Rooms.Add(new Room("shop", "Vandrande köpman"));
+        Rooms.Add(new Room("battle", "Grottans mynning"));
+        Rooms.Add(new Room("rest", "Lägereld"));
+        Rooms.Add(new Room("battle", "Grottans djup"));
+        Rooms.Add(new Room("boss", "Urdraken"));
 
         CurrentRoomIndex = 0;
 
@@ -117,9 +117,9 @@ class Program
         while (true)
         {
             var room = Rooms[CurrentRoomIndex];
-            Console.WriteLine($"--- Rum {CurrentRoomIndex + 1}/{Rooms.Count}: {room[1]} ({room[0]}) ---");
+            Console.WriteLine($"--- Rum {CurrentRoomIndex + 1}/{Rooms.Count}: {room.Name} ({room.Type}) ---");
 
-            bool continueAdventure = EnterRoom(room[0]);
+            bool continueAdventure = EnterRoom(room.Type);
             
             if (player.IsDead())
             {
@@ -184,17 +184,15 @@ class Program
     static bool DoBattle(bool isBoss)
     {
         var enemy = GenerateEnemy(isBoss);
-        Console.WriteLine($"En {enemy[1]} dyker upp! (HP {enemy[2]}, ATK {enemy[3]}, DEF {enemy[4]})");
+        Console.WriteLine($"En {enemy.Name} dyker upp! (HP {enemy.HP}, ATK {enemy.ATK}, DEF {enemy.DEF})");
 
-        int enemyHp = ParseInt(enemy[2], 10);
-        int enemyAtk = ParseInt(enemy[3], 3);
-        int enemyDef = ParseInt(enemy[4], 0);
+        int enemyDef = enemy.DEF;
 
-        while (enemyHp > 0 && !player.IsDead())
+        while (enemy.HP > 0 && !player.IsDead())
         {
             Console.WriteLine();
             ShowStatus();
-            Console.WriteLine($"Fiende: {enemy[1]} HP={enemyHp}");
+            Console.WriteLine($"Fiende: {enemy.Name} HP={enemy.HP}");
             Console.WriteLine("[A] Attack   [X] Special   [P] Dryck   [R] Fly");
             if (isBoss) Console.WriteLine("(Du kan inte fly från en boss!)");
             Console.Write("Val: ");
@@ -204,14 +202,14 @@ class Program
             if (cmd == "A")
             {
                 int damage = player.CalculateDamage(enemyDef) + Rng.Next(0, 3);
-                enemyHp -= damage;
-                Console.WriteLine($"Du slog {enemy[1]} för {damage} skada.");
+                enemy.TakeDamage(damage);
+                Console.WriteLine($"Du slog {enemy.Name} för {damage} skada.");
             }
             else if (cmd == "X")
             {
                 int special = player.UseSpecial(enemyDef, isBoss);
-                enemyHp -= special;
-                Console.WriteLine($"Special! {enemy[1]} tar {special} skada.");
+                enemy.TakeDamage(special);
+                Console.WriteLine($"Special! {enemy.Name} tar {special} skada.");
             }
             else if (cmd == "P")
             {
@@ -234,12 +232,12 @@ class Program
                 Console.WriteLine("Du tvekar...");
             }
 
-            if (enemyHp <= 0) break;
+            if (enemy.HP <= 0) break;
 
             // Fiendens tur
-            int enemyDamage = CalculateEnemyDamage(enemyAtk);
+            int enemyDamage = CalculateEnemyDamage(enemy.ATK);
             player.TakeDamage(enemyDamage);
-            Console.WriteLine($"{enemy[1]} anfaller och gör {enemyDamage} skada!");
+            Console.WriteLine($"{enemy.Name} anfaller och gör {enemyDamage} skada!");
         }
 
         if (player.IsDead())
@@ -248,37 +246,35 @@ class Program
         }
 
         // Vinstrapporter, XP, guld, loot
-        int xpReward = ParseInt(enemy[5], 5);
-        int goldReward = ParseInt(enemy[6], 3);
+        int xpReward = enemy.XPReward;
+        int goldReward = enemy.GoldReward;
 
         player.AddXP(xpReward);
         player.AddGold(goldReward);
 
         Console.WriteLine($"Seger! +{xpReward} XP, +{goldReward} guld.");
-        MaybeDropLoot(enemy[1]);
+        MaybeDropLoot(enemy.Name);
 
         return true;
     }
 
-    static string[] GenerateEnemy(bool isBoss)
+    static Enemy GenerateEnemy(bool isBoss)
     {
         if (isBoss)
         {
-            // Boss-mall
-            return new[] { "boss", "Urdraken", "55", "9", "4", "30", "50" };
+            return new Enemy("boss", "Urdraken", 55, 9, 4, 30, 50);
         }
         else
         {
-            // Slumpa bland templates
             var template = EnemyTemplates[Rng.Next(EnemyTemplates.Count)];
-            
-            // Slmumpmässig justering av stats
+
             int hp = ParseInt(template[2], 10) + Rng.Next(-1, 3);
             int atk = ParseInt(template[3], 3) + Rng.Next(0, 2);
             int def = ParseInt(template[4], 0) + Rng.Next(0, 2);
             int xp = ParseInt(template[5], 4) + Rng.Next(0, 3);
             int gold = ParseInt(template[6], 2) + Rng.Next(0, 3);
-            return new[] { template[0], template[1], hp.ToString(), atk.ToString(), def.ToString(), xp.ToString(), gold.ToString() };
+
+            return new Enemy(template[0], template[1], hp, atk, def, xp, gold);
         }
     }
 
